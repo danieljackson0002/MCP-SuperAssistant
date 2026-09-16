@@ -30,8 +30,8 @@ export class DeepSeekAdapter extends BaseAdapterPlugin {
   private readonly selectors = {
     // Primary chat input selector - DeepSeek uses textarea elements
     CHAT_INPUT: 'textarea#chat-input, #chat-input, textarea[spellcheck="false"], textarea[data-gramm="false"], textarea[placeholder*="Ask"], textarea[placeholder*="Message DeepSeek"], textarea.chat-input, div[contenteditable="true"]',
-    // Submit button selectors (multiple fallbacks - handles button and div[role="button"])
-    SUBMIT_BUTTON: 'div[role="button"].ds-button--circle, div[role="button"]._52c986b, .ds-button.ds-button--circle, div[role="button"]:has(svg path[d*="M8.3125"]), button[aria-label*="Send"], button[data-testid="send-button"], button.send-button, svg.send-icon',
+    // Submit button selectors (multiple fallbacks - handles button and div[role="button"], specifically excluding floating scroll buttons)
+    SUBMIT_BUTTON: 'div[role="button"]:has(svg path[d*="M8.3125"]), div[role="button"]._52c986b:not(.ds-button--floating), div[role="button"].ds-button--primary.ds-button--circle:not(.ds-button--floating), .ds-button.ds-button--primary.ds-button--circle:not(.ds-button--floating), div[role="button"].ds-button--circle:not(.ds-button--floating), button[aria-label*="Send"], button[data-testid="send-button"], button.send-button, svg.send-icon',
     // File upload related selectors
     FILE_UPLOAD_BUTTON: 'button[aria-label*="attach"], button[aria-label*="file"], input[type="file"]',
     FILE_INPUT: 'input[type="file"]',
@@ -432,7 +432,10 @@ export class DeepSeekAdapter extends BaseAdapterPlugin {
 
     if (submitButton && buttonEnabled) {
       try {
-        // Focus the button
+        // Ensure button is in view even if user was scrolled up
+        try {
+          submitButton.scrollIntoView({ block: 'nearest' });
+        } catch (_) {}
         submitButton.focus();
 
         // Dispatch pointer and mouse events
@@ -490,6 +493,9 @@ export class DeepSeekAdapter extends BaseAdapterPlugin {
         return false;
       }
 
+      try {
+        chatInput.scrollIntoView({ block: 'nearest' });
+      } catch (_) {}
       chatInput.focus();
 
       // Create and dispatch Enter key events (both keydown, keypress, and keyup)
